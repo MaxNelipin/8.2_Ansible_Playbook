@@ -1,0 +1,12 @@
+[Unit]
+Description=Kibana
+After=network.target
+
+[Service]
+ExecStart={{ kibana_home }}/bin/kibana
+Type=simple
+PIDFile=/var/run/kibana/kibana.pid
+Restart=always
+
+[Install]
+WantedBy=default.target

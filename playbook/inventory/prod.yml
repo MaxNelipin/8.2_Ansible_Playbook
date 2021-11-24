@@ -1,5 +1,5 @@
 ---
 elasticsearch:
   hosts:
-    ubuntu:
-      ansible_connection: docker
+    lolocalhost:
+      ansible_connection: local

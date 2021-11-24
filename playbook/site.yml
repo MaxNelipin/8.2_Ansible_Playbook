@@ -4,12 +4,13 @@
   tasks:
     - name: Set facts for Java 11 vars
       set_fact:
-        java_home: "/opt/jdk/{{ java_jdk_version }}"
+        java_home: /opt/jdk/{{ java_jdk_version }}
       tags: java
     - name: Upload .tar.gz file containing binaries from local storage
       copy:
         src: "{{ java_oracle_jdk_package }}"
         dest: "/tmp/jdk-{{ java_jdk_version }}.tar.gz"
+        mode: 0755
       register: download_java_binaries
       until: download_java_binaries is succeeded
       tags: java
@@ -18,6 +19,7 @@
       file:
         state: directory
         path: "{{ java_home }}"
+        mode: 0755
       tags: java
     - name: Extract java in the installation directory
       become: true
@@ -34,6 +36,7 @@
       template:
         src: jdk.sh.j2
         dest: /etc/profile.d/jdk.sh
+        mode: 0755
       tags: java
 - name: Install Elasticsearch
   hosts: elasticsearch
@@ -51,8 +54,10 @@
       tags: elastic
     - name: Create directrory for Elasticsearch
       file:
+        become: true
         state: directory
         path: "{{ elastic_home }}"
+        mode: 0755
       tags: elastic
     - name: Extract Elasticsearch in the installation directory
       become: true
@@ -69,6 +74,7 @@
       template:
         src: templates/elk.sh.j2
         dest: /etc/profile.d/elk.sh
+        mode: 0755
       tags: elastic
 - name: Install kibana
   hosts: elasticsearch
@@ -85,9 +91,11 @@
       until: get_kibana is succeeded
       tags: kibana
     - name: Create directrory for kibana
+      become: true
       file:
         state: directory
         path: "{{ kibana_home }}"
+        mode: 0755
       tags: kibana
     - name: Extract kibana in the installation directory
       become: true
@@ -104,13 +112,29 @@
       template:
         src: templates/kbn.sh.j2
         dest: /etc/profile.d/kbn.sh
+        mode: 0755
       tags: kibana
-    - name: Add listen IP
-      lineinfile:
-        dest: /opt/kibana/{{ kibana_version }}/config/kibana.yml
-        insertafter: '^#server.host'
-        line: 'server.host: 0.0.0.0'
-        state: present
+    - name: Upload kibana config
+      become: true
+      copy:
+        src: "kibana.yml"
+        dest: "/opt/kibana/{{ kibana_version }}/config/kibana.yml"
+        mode: 0755
+      register: download_kibana_yml
+      until: download_kibana_yml is succeeded
+      tags: kibana
+    - name: Create service file
+      become: true
+      template:
+        src: templates/kibana.service.j2
+        dest: /etc/systemd/system/kibana.service
+        mode: 0644
+      tags: kibana
+    - name: Just force systemd to reread configs
+      become: true
+      ansible.builtin.systemd:
+        daemon_reload: yes
+      tags: kibana
 
 
 
