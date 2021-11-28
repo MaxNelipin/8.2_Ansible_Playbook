@@ -1,5 +1,9 @@
 ---
 elasticsearch:
   hosts:
-    lolocalhost:
+    localhost:
+      ansible_connection: local
+kibana:
+  hosts:
+    localhost:
       ansible_connection: local
